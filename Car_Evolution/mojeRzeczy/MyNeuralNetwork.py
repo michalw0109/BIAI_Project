@@ -3,7 +3,6 @@ import numpy as np
 
 class MyNeuralNetwork:
     
-    
     def __init__ (self):
         
         
@@ -36,6 +35,9 @@ class MyNeuralNetwork:
         # non zero weight at start - linking input and output
         self.probOfStartConnection = 0.5
         
+        # number of tries for creating new neuron at start
+        self.startingMutationMagnitude = 10
+        
         # standard deviation of normal distr for weights
         self.startingStdDev = 1
         
@@ -58,6 +60,11 @@ class MyNeuralNetwork:
         # core structure of the network
         self.neuralNetwork = []
         
+        # network score
+        self.fitness = 0
+        
+        #_____________________________#
+
         
         # make list of layer sizes
         self.layerSizes[0] = self.nrOfInputs
@@ -72,6 +79,11 @@ class MyNeuralNetwork:
         # make whole network structure for weights
         for i in range(1, self.layerSizes.size):
             self.neuralNetwork.append(np.zeros((self.layerSizes[i], self.layerWeightsSizes[i])).T)
+            
+        # check for some new neuron mutations
+        for i in range(0, self.startingMutationMagnitude):
+            if np.random.random() < self.probOfNewNeuron:
+                self.addNeuron(int(np.random.random() * self.nrOfHiddenLayers) + 1)
             
         # get the neurons random weights
         for layer in range(0, self.networkSize):
@@ -186,22 +198,28 @@ class MyNeuralNetwork:
         self.reproductionStdDev *= self.stdDevMult
         return child
     
+    def test(self):
+        np.random.seed(1)
+
+        newNetwork = MyNeuralNetwork()
+
+        # some print
+        print(newNetwork.layerSizes)
+        print(newNetwork.layerWeightsSizes)
+        newNetwork.printNetwork()
+
+        # reproducing
+        children = []
+        for i in range(0,10):
+            children.append(newNetwork.reproduce())
+        for i in range(0,10):
+            children[i].printNetwork()
+            
+    def sortKey(self):
+        return self.fitness
     
     
-np.random.seed(1)
+    
 
-newNetwork = MyNeuralNetwork()
-
-# some print
-print(newNetwork.layerSizes)
-print(newNetwork.layerWeightsSizes)
-newNetwork.printNetwork()
-
-# reproducing
-children = []
-for i in range(0,10):
-    children.append(newNetwork.reproduce())
-for i in range(0,10):
-    children[i].printNetwork()
 
 
