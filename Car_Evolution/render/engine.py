@@ -208,9 +208,9 @@ class Engine:
                 # Update the screen
                 self.update()
                 self.clock.tick(Engine.FPS)
-            print("generation nr. ", counter)
+            #print("generation nr. ", counter)
             counter += 1
-            self.myEvoEngine.printPopulation()
+            #self.myEvoEngine.printPopulation()
 
             self.myEvoEngine.nextGeneration()
     
