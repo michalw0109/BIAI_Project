@@ -8,6 +8,7 @@ import time
 from render.colors import Color
 import math
 from mojeRzeczy.Evolution import Evolution
+from matplotlib import pyplot as plt
 
 
 # ------------------ CLASSES ------------------
@@ -213,6 +214,9 @@ class Engine:
             self.myEvoEngine.printPopulation()
 
             self.myEvoEngine.nextGeneration()
+
+            plt.plot(self.myEvoEngine.bestFitnessList,self.myEvoEngine.generationsList)
+            plt.show()
     
         
         

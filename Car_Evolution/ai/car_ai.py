@@ -12,7 +12,7 @@ import numpy as np
 class CarAI:
 
     TOTAL_GENERATIONS = 0
-    TIME_LIMIT = 15
+    TIME_LIMIT = 30
 
     #zmieniamy konstruktor by miec srodek okna
     def __init__(self, _myEvoEngine, start_position: list, screen_dim: list):

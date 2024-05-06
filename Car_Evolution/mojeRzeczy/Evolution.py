@@ -1,4 +1,5 @@
 from mojeRzeczy import MyNeuralNetwork as mnn
+import numpy as np
 
 class Evolution:
     
@@ -8,6 +9,17 @@ class Evolution:
         
         # what fraction of population survives, eg. 0.4 survives, makes another 0.4 with reproduction, 0.2 is new 
         self.survivalRate = 0.4
+
+        self.generationsList = [0]
+
+        self.bestFitnessList = [0.0]
+
+        # clear data each time program is run
+        with open("graphData.txt", "w"):
+            pass
+        
+        # open graph data file to append it with each generation's fitness
+        self.graphDataFileAppend = open("graphData.txt", "a")
         
         self.population = []
         
@@ -25,6 +37,13 @@ class Evolution:
     def nextGeneration(self):
         # sort the population
         self.population.sort(key=mnn.MyNeuralNetwork.sortKey, reverse=True)
+
+        best = self.population[0].fitness
+        print("BESTFITNESS = "+str(best))
+        self.graphDataFileAppend.write(str(best)+"\n")
+        self.bestFitnessList.extend([best])
+        self.generationsList.extend([len(self.generationsList)])
+
         survivorsSize = int(self.populationSize * self.survivalRate)
         
         # reproduce the best
