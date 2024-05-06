@@ -11,20 +11,36 @@ class MyNeuralNetwork:
                                     
         # create new link during simulation
         self.probOfNewConnection = 0.2
+        
+        # value probOfNewConnection is multiplied by on every iteration
+        self.probOfNewConnectionMult = 0.9
+
 
         # delete a connection during simulation
         self.probOfDelConnection = 0.2
+        
+        # value probOfDelConnection is multiplied by on every iteration
+        self.probOfDelConnectionMult = 0.9
+
 
         # create new neuron with one weight
         self.probOfNewNeuron = 0.05
+        
+        # value probOfNewNeuron is multiplied by on every iteration
+        self.probOfNewNeuronMult = 0.9
+        
 
         # delete a hidden neuron
         self.probOfDelNeuron = 0.01
         
+        # value probOfDelNeuron is multiplied by on every iteration
+        self.probOfDelNeuronMult = 0.9
+        
+        
         # standard deviation of values added to weights when creating offspring
         self.reproductionStdDev = 0.5
 
-        # value std dev is multiplied by on ever iteration
+        # value std dev is multiplied by on every iteration
         self.stdDevMult = 0.7
         
         #_____________________________#
@@ -54,7 +70,10 @@ class MyNeuralNetwork:
 
         # array of numbers of weights in each neuron for given layer
         self.layerWeightsSizes = np.zeros(self.nrOfHiddenLayers + 2, dtype = int)
-
+        
+        # maximum abs walue of a weight
+        self.maxAbsWeightVal = 100
+        
         #_____________________________#
         
         # core structure of the network
@@ -93,12 +112,14 @@ class MyNeuralNetwork:
                         self.neuralNetwork[layer][weight][neuron] = np.random.normal(0, self.startingStdDev)
 
     def activationFunction(self, x):
+        #print(" tu jest f aktywacyjna i x = ", x)
         return 1 / (1 + np.exp(-x))
 
     def activationFunction2(self, x):
         return 2 * x
 
     def printNetwork(self):
+        print("fitness = ", self.fitness)
         for i in range(0, self.networkSize):
             print(self.neuralNetwork[i])
             print(" ")
@@ -107,7 +128,6 @@ class MyNeuralNetwork:
         input.insert(0, 1)
         for i in range(0, self.networkSize - 1):
             output = self.activationFunction(np.dot(input, self.neuralNetwork[i]))
-            print(input, " ", output)
             input.extend(output)
         output = self.activationFunction(np.dot(input, self.neuralNetwork[self.networkSize - 1]))
         return output
@@ -130,7 +150,7 @@ class MyNeuralNetwork:
         for i in range(1, newLayerSizes.size):
             newNeuralNetwork.append(np.zeros((newLayerSizes[i], newLayerWeightsSizes[i])).T)
 
-        # get the neurons random weights
+        # copy the weights
         for layer in range(0, self.networkSize):
             for neuron in range(0, self.layerSizes[layer + 1]):
                 newNeuron = 0
@@ -152,7 +172,11 @@ class MyNeuralNetwork:
         for layer in range(0, self.networkSize):
             for neuron in range(0, self.layerSizes[layer + 1]):
                 for weight in range(0, self.layerWeightsSizes[layer + 1]):
-                    newNetwork[layer][weight][neuron] = self.neuralNetwork[layer][weight][neuron]        
+                    newNetwork[layer][weight][neuron] = self.neuralNetwork[layer][weight][neuron]
+                    if(newNetwork[layer][weight][neuron] > self.maxAbsWeightVal):
+                        newNetwork[layer][weight][neuron] = self.maxAbsWeightVal
+                    if(newNetwork[layer][weight][neuron] < -self.maxAbsWeightVal):
+                        newNetwork[layer][weight][neuron] = -self.maxAbsWeightVal
         return newNetwork
 
     def copy(self):
@@ -194,7 +218,11 @@ class MyNeuralNetwork:
                         if np.random.random() < self.probOfNewConnection:
                             child.neuralNetwork[layer][weight][neuron] = np.random.normal(0, self.reproductionStdDev)
         
-        # update new std dev for reproduction
+        # update new parameters for reproduction
+        self.probOfNewConnection *= self.probOfNewConnectionMult
+        self.probOfDelConnection *= self.probOfDelConnectionMult
+        self.probOfNewNeuron *= self.probOfNewNeuronMult
+        self.probOfDelNeuron *= self.probOfDelNeuronMult
         self.reproductionStdDev *= self.stdDevMult
         return child
     
@@ -218,7 +246,7 @@ class MyNeuralNetwork:
     def sortKey(self):
         return self.fitness
     
-    
+
     
 
 

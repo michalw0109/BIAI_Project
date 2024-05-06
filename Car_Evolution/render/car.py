@@ -35,7 +35,7 @@ class Car:
     MINIMUM_SPEED = 2
 
     #ANGLE_INCREMENT = 10
-    ANGLE_INCREMENT = 5
+    ANGLE_INCREMENT = 3
 
     SPEED_INCREMENT = 1
 
@@ -279,38 +279,31 @@ class Car:
         """
 
         # Reward for distance driven
-        distance_reward = self.driven_distance / 10000
         
-        MAX_EXPECTED_SPEED = 5000
-        speed_reward = (self.speed / MAX_EXPECTED_SPEED) ** 0.5  # Square root to apply diminishing returns
-        malus = self.speed_penalty / 100
 
-        # Calculate the final reward
-        #print(self.speed," ",self.driven_distance," ",speed_reward," ",self.max_angle)
-        #final_reward = distance_reward + speed_reward - malus
-        #final_reward = self.max_angle / 50
-        final_reward = distance_reward
+   
+        final_reward = self.max_angle / 5
+      
 
 
         return final_reward
 
     
-    def accelerate(self) -> None:
+    def accelerate(self, mult) -> None:
         """Accelerate the car"""
-        self.speed += Car.SPEED_INCREMENT
+        self.speed += Car.SPEED_INCREMENT * mult
 
-    def brake(self) -> None:
+    def brake(self, mult) -> None:
         """Brake the car"""
         if self.speed > Car.MINIMUM_SPEED:  # We don't want to go backwards nor going too slow
-            self.speed -= Car.SPEED_INCREMENT
+            self.speed -= Car.SPEED_INCREMENT * mult
         else:  
             self.speed = Car.MINIMUM_SPEED
-            self.speed_penalty += 1  # speed_penalty for going too slow
         
-    def turn_left(self) -> None:
+    def turn_left(self, mult) -> None:
         """Turn the car to the left"""
-        self.angle += Car.ANGLE_INCREMENT
+        self.angle += Car.ANGLE_INCREMENT * mult
         
-    def turn_right(self) -> None:
+    def turn_right(self, mult) -> None:
         """Turn the car to the right"""
-        self.angle -= Car.ANGLE_INCREMENT
+        self.angle -= Car.ANGLE_INCREMENT * mult

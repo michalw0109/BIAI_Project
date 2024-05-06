@@ -2,12 +2,12 @@
 
 
 import pygame
-import neat
 from ai.car_ai import CarAI
 from render.car import Car
 import time
 from render.colors import Color
 import math
+from mojeRzeczy.Evolution import Evolution
 
 
 # ------------------ CLASSES ------------------
@@ -20,7 +20,7 @@ class Engine:
     FPS = 60
     
     #moje
-    USE_TRACK_IMAGE = False
+    USE_TRACK_IMAGE = True
     
     
     DEFAULT_FONT = "comicsansms"
@@ -29,11 +29,14 @@ class Engine:
     
     
 
-    def __init__(self, NEAT_CONFIG_PATH, DEBUG, MAX_SIMULATIONS):
-        self.NEAT_CONFIG_PATH = NEAT_CONFIG_PATH
-        self.DEBUG = DEBUG
+    def __init__(self, MAX_SIMULATIONS):
+        
+        # moja inicjalizacja silnika ewolucyjnego
+        self.myEvoEngine = Evolution()
+        self.myEvoEngine.createPopulation()
+        
         self.MAX_SIMULATIONS = MAX_SIMULATIONS
-        self.title = "Neat Cars"
+        self.title = "Wieczorek Frycz Evolution"
         pygame.display.set_caption(self.title)
         self.screen = pygame.display.set_mode((Engine.WIDTH, Engine.HEIGHT))
         self.screen.fill(Color.WHITE)  # Fill screen with white
@@ -143,89 +146,79 @@ class Engine:
             if self.is_placing_start_point:
                 self.handle_placing_start_point()
             
+
+            
             # AI
             if self.ai_can_start:
-                self.start_ai()
-            
+                self.runMyEvoEngine()
             # Update
             self.update()
             
-    def start_ai(self):
-        """Starts the AI"""
+  
         
-        # Load neat config file
-        config = neat.config.Config(
-            neat.DefaultGenome,
-            neat.DefaultReproduction,
-            neat.DefaultSpeciesSet,
-            neat.DefaultStagnation,
-            self.NEAT_CONFIG_PATH
-        )
+    # moja funkcja podobna do uruchomienia wszystkiego
+    def runMyEvoEngine(self):
+        
+        
+        #self.myEvoEngine.printPopulation()
+        counter = 1
+        while(True):
+            
+            # Initialize CarAI
+            car_ai = CarAI(self.myEvoEngine, self.decided_car_pos,[self.WIDTH, self.HEIGHT])
+            
+            # Start timer
+            timer = time.time()
 
-        # Create population
-        population = neat.Population(config)
+            self.is_running = True
+            while self.is_running:
+                # Events handler
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        exit()
 
-        # Add reporters if debug is enabled
-        if self.DEBUG:
-            population.add_reporter(neat.StdOutReporter(True))
-            population.add_reporter(neat.StatisticsReporter())
+                # Compute the next generation
+                car_ai.compute(self.track)
 
-        # Run simulation for MAX_SIMULATION generations
-        population.run(self.run_simulation, self.MAX_SIMULATIONS)
+                # Break if all cars are dead
+                if car_ai.remaining_cars == 0:
+                    break
+
+                # Refresh counter to exit after CarAI.TIME_LIMIT seconds
+                time_left = time.time() - timer
+                if time_left > CarAI.TIME_LIMIT:
+                    break
+
+                # Draw the track and cars which are still alive
+                self.screen.blit(self.track, (0, 0))
+                for car in car_ai.cars:
+                    car.draw(self.screen)
+                    
+               
+
+                # Refresh and show informations
+                t = "Generation: " + str(car_ai.TOTAL_GENERATIONS)
+                t2 = "Still Alive: " + str(car_ai.remaining_cars)
+                t3 = "Time Left: " + str(round(CarAI.TIME_LIMIT - time_left, 2)) + "s"
+                t4 = "Best Fitness: " + str(round(car_ai.best_fitness))
+                pygame.display.set_caption(self.title + " - " + t + " - " + t2 + " - " + t3 + " - " + t4)
+
+
+
+                # Update the screen
+                self.update()
+                self.clock.tick(Engine.FPS)
+            print("generation nr. ", counter)
+            counter += 1
+            self.myEvoEngine.printPopulation()
+
+            self.myEvoEngine.nextGeneration()
+    
+        
+        
+        
         
 
-    def run_simulation(self, genomes: neat.DefaultGenome, config: neat.Config) -> None:
-        """Run the simulation (evolutionarily)
-
-        Args:
-            genomes (neat.DefaultGenome): The genomes of the population
-            config (neat.Config): The neat configuration
-        """
-
-        # Initialize CarAI
-        car_ai = CarAI(genomes, config, self.decided_car_pos,[self.WIDTH, self.HEIGHT])
-        
-        # Start timer
-        timer = time.time()
-
-        self.is_running = True
-        while self.is_running:
-            # Events handler
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    exit()
-
-            # Compute the next generation
-            car_ai.compute(self.track)
-
-            # Break if all cars are dead
-            if car_ai.remaining_cars == 0:
-                break
-
-            # Refresh counter to exit after CarAI.TIME_LIMIT seconds
-            time_left = time.time() - timer
-            if time_left > CarAI.TIME_LIMIT:
-                break
-
-            # Draw the track and cars which are still alive
-            self.screen.blit(self.track, (0, 0))
-            for car in car_ai.cars:
-                car.draw(self.screen)
-                
-            # Draw the best NN
-            if car_ai.best_nn is not None:
-                car_ai.best_nn.draw(self.screen)
-
-            # Refresh and show informations
-            t = "Generation: " + str(car_ai.TOTAL_GENERATIONS)
-            t2 = "Still Alive: " + str(car_ai.remaining_cars)
-            t3 = "Time Left: " + str(round(CarAI.TIME_LIMIT - time_left, 2)) + "s"
-            t4 = "Best Fitness: " + str(round(car_ai.best_fitness))
-            pygame.display.set_caption(self.title + " - " + t + " - " + t2 + " - " + t3 + " - " + t4)
-
-            # Update the screen
-            self.update()
-            self.clock.tick(Engine.FPS)
 
     def update(self):
         pygame.display.update()

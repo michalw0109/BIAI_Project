@@ -1,10 +1,10 @@
 # ------------------ IMPORTS ------------------
 
 
-import neat
 from render.car import Car, Action
-from render.neural_network.nn import NN
 import pygame
+from mojeRzeczy.Evolution import Evolution
+import numpy as np
 
 
 # ------------------ CLASSES ------------------
@@ -15,29 +15,23 @@ class CarAI:
     TIME_LIMIT = 15
 
     #zmieniamy konstruktor by miec srodek okna
-    def __init__(self, genomes: neat.DefaultGenome, config: neat.Config, start_position: list, screen_dim: list):
+    def __init__(self, _myEvoEngine, start_position: list, screen_dim: list):
         CarAI.TOTAL_GENERATIONS += 1
         
-        self.genomes = genomes
+        self.myEvoEngine = _myEvoEngine
 
         self.cars = []
-        self.nets = []
         
         self.best_fitness = 0
-        self.nns = []
-        self.best_nn = None
+
+        
 
         # We create a neural network for every given genome
-        for _, genome in genomes:
-            net = neat.nn.FeedForwardNetwork.create(genome, config)
-            self.nets.append(net)
-            genome.fitness = 0
+        for _ in range(0, self.myEvoEngine.populationSize):
             self.cars.append(Car(start_position,screen_dim))
-            self.nns.append(NN(config, genome, (60, 130)))
 
         self.remaining_cars = len(self.cars)
-        self.best_nn = None
-        self.best_input = None
+        
 
     def compute(self, track: pygame.Surface) -> None:
         """Compute the next move of every car and update their fitness
@@ -47,39 +41,27 @@ class CarAI:
             track (pygame.Surface): The track on which the car is being drawn
             width (int): The width of the window
         """
-        i = 0
-        for car, net in zip(self.cars, self.nets):
+        
+        for i in range(0, self.myEvoEngine.populationSize):
             
-            car_data = car.get_data()
-
+            input = self.cars[i].get_data()
             # Activate the neural network and get the output from the car_data (input)
-            output = net.activate(car_data)
+            output = self.myEvoEngine.population[i].compute(input)
+            output -= output.min()
+            if output.sum() != 0:
+                output /= output.sum()
             
-            # Output gets treated and the car is updated in the next lines
-            choice = output.index(max(output))
+
             
-            # Refreshing nodes of all neural networks
-            for node in self.nns[i].nodes:
-                node.inputs = car_data
-                node.output = choice
+            
+            self.cars[i].turn_left(output[0])
+            self.cars[i].turn_right(output[1])
+            self.cars[i].accelerate(output[2])
+            self.cars[i].brake(output[3])
 
-            # 0: Left
-            if choice == Action.TURN_LEFT:
-                car.turn_left()
-
-            # 1: Right
-            elif choice == Action.TURN_RIGHT:
-                car.turn_right()
-
-            # 2: Accelerate
-            elif choice == Action.ACCELERATE:
-                car.accelerate()
-
-            # 3: Brake
-            elif choice == Action.BRAKE:
-                car.brake()
+      
                 
-            i += 1
+            
 
         # Refresh cars sprites, number of cars which are still alive and update their fitness
         self.remaining_cars = sum(1 for car in self.cars if car.alive)
@@ -89,7 +71,9 @@ class CarAI:
         for i, car in enumerate(self.cars):
             if car.alive:
                 car.update_sprite(track)
-                self.genomes[i][1].fitness += car.get_reward()
-                if self.genomes[i][1].fitness > self.best_fitness:
-                    self.best_fitness = self.genomes[i][1].fitness
-                    self.best_nn = self.nns[i]
+                self.myEvoEngine.population[i].fitness += car.get_reward()
+                if self.myEvoEngine.population[i].fitness > self.best_fitness:
+                    self.best_fitness = self.myEvoEngine.population[i].fitness
+                    
+    
+   

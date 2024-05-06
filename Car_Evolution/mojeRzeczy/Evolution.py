@@ -1,4 +1,4 @@
-import MyNeuralNetwork as mnn
+from mojeRzeczy import MyNeuralNetwork as mnn
 
 class Evolution:
     
@@ -17,12 +17,15 @@ class Evolution:
             
     def printPopulation(self):
         for i in range(0, self.populationSize):
+            print(" ")
+            print("network nr. ", i + 1)
+            print(" ")
             self.population[i].printNetwork()
             
     def nextGeneration(self):
         # sort the population
         self.population.sort(key=mnn.MyNeuralNetwork.sortKey, reverse=True)
-        survivorsSize = self.populationSize * self.survivalRate
+        survivorsSize = int(self.populationSize * self.survivalRate)
         
         # reproduce the best
         for i in range (0, survivorsSize):
@@ -31,6 +34,10 @@ class Evolution:
         # fill in the rest with new
         for i in range (0, self.populationSize - 2 * survivorsSize):
             self.population[i + 2 * survivorsSize] = mnn.MyNeuralNetwork()
+            
+        # reset the fitness
+        for i in range (0, self.populationSize):
+            self.population[i].fitness = 0
             
     def test(self):
         newPopulation = Evolution()
